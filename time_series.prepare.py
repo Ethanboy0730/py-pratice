@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
 
 # 建立與 SQL Server 的連接
 conn = pymssql.connect(
@@ -110,4 +111,17 @@ print(f"R^2 Score: {r2}")
 result_df.loc[y_test.index, 'label_1_pred'] = y_pred[:, 0]
 result_df.loc[y_test.index, 'label_2_pred'] = y_pred[:, 1]
 
-print(result_df.head())
+# 視覺化預測結果
+plt.figure(figsize=(14, 7))
+
+# 實際值和預測值的比較圖表
+plt.plot(result_df.index, result_df['label_1'], label='Actual Label 1', color='blue')
+plt.plot(result_df.index, result_df['label_2'], label='Actual Label 2', color='green')
+plt.plot(result_df.index, result_df['label_1_pred'], label='Predicted Label 1', linestyle='--', color='red')
+plt.plot(result_df.index, result_df['label_2_pred'], label='Predicted Label 2', linestyle='--', color='orange')
+
+plt.title('Actual vs Predicted Values')
+plt.xlabel('Date')
+plt.ylabel('Average Unit Price')
+plt.legend()
+plt.show()
