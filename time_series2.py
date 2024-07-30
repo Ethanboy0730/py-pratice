@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jul 30 16:02:31 2024
+
+@author: m07966
+"""
+
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
@@ -7,7 +14,7 @@ import matplotlib.pyplot as plt
 df = pd.read_excel("time_series_data.xlsx", index_col="Unnamed: 0", parse_dates=True)
 
 # 定義函數將 DataFrame 轉換為特徵和標籤
-def df_to_X_y(df, window_size=28, forecast_horizon=1):
+def df_to_X_y(df, window_size=28, forecast_horizon=7):
     df_as_np = df["平均單價"].to_numpy()  # 確保只取數值欄位
 
     X = []
@@ -37,41 +44,27 @@ result_df = pd.concat([pd.Series(dates, name="index_date"), X_df, y_df], axis=1)
 result_df.set_index("index_date", inplace=True)
 
 # 分割訓練和測試數據
-X_train = X_df.iloc[:2274]
-y_train = y_df.iloc[:2274]
+train_size = int(len(X_df) * 0.8)
+X_train, X_test = X_df.iloc[:train_size], X_df.iloc[train_size:]
+y_train, y_test = y_df.iloc[:train_size], y_df.iloc[train_size:]
 
 # 訓練模型
 model = RandomForestRegressor()
 model.fit(X_train, y_train)
 
-# 設定初始輸入資料為最後一個窗口的資料
-input_data = X_train.iloc[-1].values.reshape(1, -1)
-
-# 設定預測的時間長度
-prediction_length = 30
-
-# 進行無限遞迴的預測
-predictions = []
-for _ in range(prediction_length):
-    # 進行單一時間點的預測
-    prediction = model.predict(input_data)
-    predictions.append(prediction[0])  # 取得預測結果的第一個時間點值
-
-    # 更新輸入資料，將預測結果加入到最後一個窗口的資料中
-    input_data = np.roll(input_data, -1)
-    input_data[0, -forecast_horizon:] = prediction
+# 預測
+y_pred = model.predict(X_test)
 
 # 將預測結果轉換為 DataFrame，並設置日期索引
-future_dates = pd.date_range(start=result_df.index[-1] + pd.Timedelta(days=1), periods=prediction_length)
-predictions_df = pd.DataFrame(predictions, columns=y_train.columns, index=future_dates)
+y_pred_df = pd.DataFrame(y_pred, columns=y_test.columns, index=y_test.index)
 
 # 視覺化預測結果
 plt.figure(figsize=(14, 7))
 
 # 繪製實際值和預測值
-plt.plot(df.index, df["平均單價"], label="Actual")
-plt.plot(predictions_df.index, predictions_df["t+1"], label="Predicted t+1", linestyle="--")
-plt.plot(predictions_df.index, predictions_df["t+2"], label="Predicted t+2", linestyle="--")
+for i in range(forecast_horizon):
+    plt.plot(y_test.index, y_test.iloc[:, i], label=f"Actual t+{i+1}")
+    plt.plot(y_pred_df.index, y_pred_df.iloc[:, i], linestyle='--', label=f"Predicted t+{i+1}")
 
 plt.title("Actual vs Predicted Average Unit Price")
 plt.xlabel("Date")
@@ -79,5 +72,15 @@ plt.ylabel("Average Unit Price")
 plt.legend()
 plt.show()
 
+# 評估模型性能
+from sklearn.metrics import mean_squared_error, r2_score
+
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred, multioutput='uniform_average')
+
+print(f"Mean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
 # 印出預測結果
-print(predictions_df)
+print(y_pred_df)
+
