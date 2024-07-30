@@ -1,6 +1,10 @@
 import pymssql
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.multioutput import MultiOutputRegressor
+from sklearn.metrics import mean_squared_error, r2_score
 
 # 建立與 SQL Server 的連接
 conn = pymssql.connect(
@@ -84,5 +88,26 @@ y_df = pd.DataFrame(y, columns=[f"label_{i+1}" for i in range(y.shape[1])])
 # 合併 X 和 y DataFrame
 result_df = pd.concat([pd.Series(dates, name="index_date"), X_df, y_df], axis=1)
 result_df.set_index("index_date", inplace=True)
+
+# 分割資料集為訓練集和測試集
+X_train, X_test, y_train, y_test = train_test_split(X_df, y_df, test_size=0.2, shuffle=False)
+
+# 使用多輸出回歸模型訓練隨機森林回歸模型
+model = MultiOutputRegressor(RandomForestRegressor(n_estimators=100, random_state=42))
+model.fit(X_train, y_train)
+
+# 預測
+y_pred = model.predict(X_test)
+
+# 評估模型性能
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred, multioutput='uniform_average')
+
+print(f"Mean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
+# 將結果加入 DataFrame 中
+result_df.loc[y_test.index, 'label_1_pred'] = y_pred[:, 0]
+result_df.loc[y_test.index, 'label_2_pred'] = y_pred[:, 1]
 
 print(result_df.head())
