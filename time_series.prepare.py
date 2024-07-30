@@ -63,23 +63,26 @@ def df_to_X_y(df, window_size=9, forecast_horizon=2):
 
     X = []
     y = []
+    dates = []
 
     for i in range(len(df_as_np) - window_size - forecast_horizon + 1):  # 修改迴圈範圍
         row = df_as_np[i:i+window_size].reshape(-1, 1)  # 轉換成正確的形狀
         X.append(row.flatten())  # 展開為一維
         labels = df_as_np[i+window_size:i+window_size+forecast_horizon]  # 取兩個時間點的數值
         y.append(labels)
+        dates.append(df.index[i + window_size])  # 紀錄對應的時間索引
 
-    return np.array(X), np.array(y)
+    return np.array(X), np.array(y), dates
 
 # 測試 df_to_X_y 函數
-X, y = df_to_X_y(df)
+X, y, dates = df_to_X_y(df)
 
-# 將 X 和 y 組合成 DataFrame
+# 將 X 和 y 組合成 DataFrame，並加入時間索引
 X_df = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
 y_df = pd.DataFrame(y, columns=[f"label_{i+1}" for i in range(y.shape[1])])
 
 # 合併 X 和 y DataFrame
-result_df = pd.concat([X_df, y_df], axis=1)
+result_df = pd.concat([pd.Series(dates, name="index_date"), X_df, y_df], axis=1)
+result_df.set_index("index_date", inplace=True)
 
 print(result_df.head())
