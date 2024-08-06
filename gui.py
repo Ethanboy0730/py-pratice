@@ -10,7 +10,7 @@ model = load('lr_model.joblib')
 car_dict = {'無車位': 0, '其他': 1, '塔式車位': 2, '升降機械': 3, '升降平面': 4, '坡道機械': 5, '坡道平面': 6, '一樓平面': 7}
 material_dict = {"其他": 0, "ＲＣ造": 1, "鋼骨造": 2, "鋼骨鋼筋混凝土造": 3, "鋼筋混凝土造": 4}
 type_dict = {"公寓(5樓含以下無電梯)": 0, "華廈(10層含以下有電梯)": 1, "住宅大樓(11層含以上有電梯)": 2, "透天厝": 3}
-district_dict = {'北屯區': 0, '南屯區': 1, '西屯區': 2, '北區': 3, '西區': 4, '東區': 5, '南區': 6}  # 示例字典
+district_dict = {'北屯區': 0, '南屯區': 1, '西屯區': 2, '北區': 3, '西區': 4, '東區': 5, '南區': 6}
 
 # 定義預測函數
 def predict():
@@ -55,10 +55,23 @@ entries = []
 for label in labels:
     frame = ttk.Frame(root)
     frame.pack(fill='x')
+    
     ttk.Label(frame, text=label, width=20).pack(side='left')
-    entry = ttk.Entry(frame)
-    entry.pack(fill='x', expand=True)
-    entries.append(entry)
+    
+    # 根據標籤決定是創建 Entry 還是 Combobox
+    if label in ["車位類別", "建材", "建物型態", "鄉鎮市區"]:
+        # 使用下拉選單
+        combobox = ttk.Combobox(frame, values=list(car_dict.keys() if label == "車位類別" else
+                                                   material_dict.keys() if label == "建材" else
+                                                   type_dict.keys() if label == "建物型態" else
+                                                   district_dict.keys()))
+        combobox.pack(fill='x', expand=True)
+        entries.append(combobox)
+    else:
+        # 使用輸入框
+        entry = ttk.Entry(frame)
+        entry.pack(fill='x', expand=True)
+        entries.append(entry)
 
 # 創建預測按鈕
 predict_button = ttk.Button(root, text="預測", command=predict)
@@ -70,6 +83,7 @@ result_label.pack(pady=10)
 
 # 運行 GUI
 root.mainloop()
+
 
 
 
