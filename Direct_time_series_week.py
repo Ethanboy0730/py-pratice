@@ -18,12 +18,14 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from skforecast.model_selection import grid_search_forecaster
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error,mean_absolute_percentage_error,root_mean_squared_error
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import Ridge
 from skforecast.utils import save_forecaster
 import joblib
 import warnings
+from skforecast.model_selection import backtesting_forecaster
+
 warnings.filterwarnings("ignore")
 #%%
 
@@ -180,7 +182,7 @@ df_results.head(10)
 #%%
 
 forecaster_Rf = ForecasterAutoreg(
-                 regressor = RandomForestRegressor(n_estimators=10,max_depth=15,random_state=123),
+                 regressor = Ridge(alpha=0.01,random_state=123),
                  lags      = 23,
                  weight_func=custom_weights
              )
@@ -208,20 +210,17 @@ ax.legend();
 #%
 
 #%%
-# 將預測結果分成每12筆資料
-test=data.loc[start_test:]
 
-predictions_batch = predictions.groupby(np.arange(len(predictions)) // 12).last()
-# 將測試集分成每12筆資料
-test_batch = test.groupby(np.arange(len(test)) // 12).last()
 
-# 計算每12筆資料的漲跌方向
-predictions_direction = np.where(predictions_batch.diff() > 0, '上漲', '下跌')
-test_direction = np.where(test_batch.diff() > 0, '上漲', '下跌')
+#算每4周趨勢做一個比對
+# 計算每4周的趨勢
+predictions_trend = predictions.rolling(window=4).mean()
 
-# 輸出結果
-print("預測漲跌方向：", predictions_direction)
-print("實際漲跌方向：", test_direction)
+
+
+
+
+
 
 
 #%%
