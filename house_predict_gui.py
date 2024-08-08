@@ -21,10 +21,8 @@ os.chdir('C:/Users/m07966/Desktop/m07966/折價綠')
 
 
 # 加載模型
-if getattr(sys, 'frozen',False):
-    model_path=os.path.join(sys._MEIPASS,'lr_model_2.joblib')
-else:
-    model_path='lr_model_2.joblib'
+
+model_path='lr_model_2.joblib'
     
 model=load(model_path)
 
@@ -33,7 +31,7 @@ model=load(model_path)
 car_dict = {'無車位': 0, '其他': 1, '塔式車位': 2, '升降機械': 3, '升降平面': 4, '坡道機械': 5, '坡道平面': 6, '一樓平面': 7}
 material_dict = {"其他": 0, "ＲＣ造": 1, "鋼骨造": 2, "鋼骨鋼筋混凝土造": 3, "鋼筋混凝土造": 4}
 type_dict = {"公寓(5樓含以下無電梯)": 0, "華廈(10層含以下有電梯)": 1, "住宅大樓(11層含以上有電梯)": 2, "透天厝": 3}
-district_dict = {'北屯區': 0, '南屯區': 1, '西屯區': 2, '北區': 3, '西區': 4, '東區': 5, '南區': 6}
+district_dict = {'中區': 0, '北區': 1, '北屯區': 2, '南區': 3, '南屯區': 4, '后里區': 5, '外埔區': 6, '大甲區': 7, '大肚區': 8, '大里區': 9, '大雅區': 10, '太平區': 11, '新社區': 12, '東勢區': 13, '東區': 14, '梧棲區': 15, '沙鹿區': 16, '清水區': 17, '潭子區': 18, '烏日區': 19, '神岡區': 20, '西區': 21, '西屯區': 22, '豐原區': 23, '霧峰區': 24, '龍井區': 25}
 admin_dict={"無":0,"有":1}
 date_dict={'2023Q1': 0, '2023Q2': 1, '2023Q3': 2, '2023Q4': 3, '2024Q1': 4, '2024Q2': 5}
 
@@ -51,6 +49,11 @@ def predict():
                 input_values.append(type_dict[value])
             elif label == "鄉鎮市區":
                 input_values.append(district_dict[value])
+            elif label == "有無管理組織":
+                input_values.append(admin_dict[value])
+            elif label == "刊登季度":
+                input_values.append(date_dict[value])
+           
             else:
                 input_values.append(float(value))
                 
